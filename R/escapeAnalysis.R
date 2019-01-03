@@ -1,3 +1,14 @@
+#' Analyze escape response of flies
+#'
+#'
+#' @param obj A target image of Image object or an array.
+#' @param ref A reference image of Image object or an array.
+#' @export
+#' @examples
+#' escapeAnalysis()
+#'
+#'
+
 escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
                            start=1, end=0, interval=0, large=300, maxdist=200, size=100, unit=1, fps=160,
                            maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, maskmoviejp=T, DLO=T, DLOonly=F, ram=0,
@@ -10,13 +21,9 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   require(zoo)
   require(ggplot2)
   source(paste0(rdir, "sfeatures.R"))
-  source(paste0(rdir, "sweepC.R"))
   source(paste0(rdir, "moviespeed.R"))
   source(paste0(rdir, "movieobjects.R"))
-  source(paste0(rdir, "colorspeed.R"))
   source(paste0(rdir, "colorJumps.R"))
-  source(paste0(rdir, "tracking3-3.R"))
-  source(paste0(rdir, "moviemask.R"))
   intdir <- paste0(dir, "/", file, "_dir/")
   dir.create(paste0(dir, "/", file, "_dir"))
   dir.create(paste0(intdir, "tmpimgs"))

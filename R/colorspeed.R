@@ -1,11 +1,20 @@
+#' Color trajectory of an object by speed
+#'
+#'
+#' @param obj A target image of Image object or an array.
+#' @param ref A reference image of Image object or an array.
+#' @export
+#' @examples
+#' colorspeed()
+#'
+
 colorspeed <- function(dir, obj, x, y, z, bg, min=0, max=350, f="", i=0, linetype=1, lwd=0.1){
-  require(RImageBook)
   require(ggplot2)
   require(grid)
   w <- dim(bg)[1]
   h <- dim(bg)[2]
   df <- data.frame(obj = as.factor(obj), x = x, y = y, z = z)
-  p1 <- ggplot(df, aes(x, y, colour=z, group=obj)) + 
+  p1 <- ggplot(df, aes(x, y, colour=z, group=obj)) +
     annotate("text", x = w/2, y = h - 25, label = f, size= 1, colour = "yellow") +
     geom_path(linetype=linetype, lwd = lwd) +
     coord_fixed(ratio = 1) +
@@ -19,7 +28,7 @@ colorspeed <- function(dir, obj, x, y, z, bg, min=0, max=350, f="", i=0, linetyp
           rect= element_blank(),
           plot.margin=unit(c(0,0,-1,-1),"lines"))
   filename <- paste0(dir, "tempsp", i, ".png")
-  ggsave(plot=p1, filename = filename, width = w/300, height = h/300, bg = "black") 
+  ggsave(plot=p1, filename = filename, width = w/300, height = h/300, bg = "black")
   tracksp <- readImage(filename)
   trackspbl <- tracksp[,,1]>0|tracksp[,,2]>0|tracksp[,,3]>0
   tracksp <- Image(sweep(bg, 1:2, (1-trackspbl), "*")) + tracksp

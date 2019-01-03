@@ -1,5 +1,4 @@
 moviemask <- function(dir, file, mask, skip=1){
-  require(RImageBook)
   filename <- paste0(dir, "/", file)
   intdir <- paste0(dir, "/", file, "_dir/")
   nfr <- dim(mask)[3]
