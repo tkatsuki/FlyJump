@@ -17,6 +17,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   require(Rcpp)
   require(tools)
   require(abind)
+  require(EBImage)
   require(data.table)
   require(zoo)
   require(ggplot2)
@@ -90,8 +91,8 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     bge <- readAVI(paste0(dir, "/", file), bgend, bgend)
   }
   bgmax <- pmax(bgs, bge)
-  bg <- medianPrj(abind(bgs, bge, bgmax, along=3))
-  writeImage(bg/255, file=paste0(intdir, file, "_bg.png"))
+  bg <- dipr::medianPrj(abind(bgs, bge, bgmax, along=3))
+  EBImage::writeImage(bg/255, file=paste0(intdir, file, "_bg.png"))
 
   # Automatic interval setting
   if(interval==0){
