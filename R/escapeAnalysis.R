@@ -110,8 +110,8 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   blocks <- (end - start)%/% interval
   lastblock <- (end - start)%% interval
   firstfr <- readAVI(paste0(dir, "/", file), start, start)[,,1]/255
-  h <- dim(firstfr)[1]
-  w <- dim(firstfr)[2]
+  w <- dim(firstfr)[1]
+  h <- dim(firstfr)[2]
   # Create a mask for the arena
   arenamask <- drawCircle(firstfr*0, h/2, w/2-5, 400, col=1, fill=T)
 
@@ -134,9 +134,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       cat(ms7, sep="\n")
       cat(ms7, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-      #system.time(nobg <- sweep(-fly, 1:2, -bg))
       nobg <- -ssweep(fly, bg, "-")
-
       rm(fly)
 
       # Extract arena only
@@ -177,7 +175,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       kern3 <- makeBrush(size=3, shape="diamond")
       mask <- opening(mask, kern3)
       mask <- bwlabel(mask)
-      ftrs <- sfeatures(rdir, mask)
+      ftrs <- sfeatures(mask)
       dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
       if(length(which(!is.na(dat)))==0) {
         ms9_2 <- "No object detected"
@@ -277,7 +275,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       rm(nobg)
 
       # To remove small object
-      ftrs <- sfeatures(rdir, mask)
+      ftrs <- sfeatures(mask)
 
       write(largeobjfr, file=paste0(intdir, file, "_", from, "-", to, "_largeobjFin.txt"))
       dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
@@ -321,9 +319,8 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     ms12 <- paste0("Running tracking function.")
     cat(ms12, sep="\n")
     cat(ms12, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-    #res <- tracking3(rdir, mask, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
-    res <- tracking3(rdir=rdir, w=w, h=h, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
-    #rm(mask)
+    #res <- tracking(mask, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
+    res <- tracking(w=w, h=h, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
     writeImage(res[[1]], file=paste0(intdir, file, "_", start, "-", end, ".png"))
 
     # Save results of tracking for future analysis
@@ -338,7 +335,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   # Save trajectories on the first frame
   flycol <- rgbImage(firstfr, firstfr, firstfr)
   flyresbl <- res[[1]][,,1]>0|res[[1]][,,2]>0|res[[1]][,,3]>0
-  flyres <- Image(sweep(flycol, 1:2, (1-flyresbl), "*")) + res[[1]]
+  flyres <- Image(sweep(flycol, 1:2, (1-flyresbl), "*")) + res[[1]][,,1:3] # Ignore alpha channel of the png
   colorMode(flyres) <- "Color"
   writeImage(flyres, file=paste0(intdir, file, "_", start, "-", end, "_overlay", ".png"))
 
@@ -355,7 +352,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     kern3 <- makeBrush(size=3, shape="diamond")
     mask <- opening(mask, kern3)
     mask <- bwlabel(mask)
-    ftrs <- sfeatures(rdir, mask)
+    ftrs <- sfeatures(mask)
     png(file=paste0(intdir, file, "_", d-50, "-", d+50, "_sizeprofile.png"))
     par(mar = c(5,4,4,5))
     dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
