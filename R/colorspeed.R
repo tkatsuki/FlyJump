@@ -9,8 +9,6 @@
 #'
 
 colorspeed <- function(dir, obj, x, y, z, bg, min=0, max=350, f="", i=0, linetype=1, lwd=0.1){
-  require(ggplot2)
-  require(grid)
   w <- dim(bg)[1]
   h <- dim(bg)[2]
   df <- data.frame(obj = as.factor(obj), x = x, y = y, z = z)

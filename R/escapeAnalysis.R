@@ -16,15 +16,11 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   require(dipr)
   require(Rcpp)
   require(tools)
-  require(abind)
   require(EBImage)
   require(data.table)
   require(zoo)
   require(ggplot2)
-  source(paste0(rdir, "sfeatures.R"))
-  source(paste0(rdir, "moviespeed.R"))
-  source(paste0(rdir, "movieobjects.R"))
-  source(paste0(rdir, "colorJumps.R"))
+
   intdir <- paste0(dir, "/", file, "_dir/")
   dir.create(paste0(dir, "/", file, "_dir"))
   dir.create(paste0(intdir, "tmpimgs"))
@@ -165,7 +161,6 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       if(thresh!=0){
         threshbody <- thresh
       }
-
       ms9 <- paste0("Binarize with threshold = ", threshbody)
       cat(ms9, sep="\n")
       cat(ms9, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
@@ -203,7 +198,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
           mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
           mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
-          ftrs <- sfeatures(rdir, mask[,,largeobjfr])
+          ftrs <- sfeatures(mask[,,largeobjfr])
           smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 50))
           mask[,,largeobjfr] <- rmObjects(mask[,,largeobjfr], smallobj)
           largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
@@ -219,7 +214,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
           mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
           mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
-          ftrs <- sfeatures(rdir, mask[,,largeobjfr])
+          ftrs <- sfeatures(mask[,,largeobjfr])
           smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 50))
           mask[,,largeobjfr] <- rmObjects(mask[,,largeobjfr], smallobj)
           largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
@@ -237,7 +232,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           for (j in largeobjfr){
             if(j==1) break
             seedfr <- j - 1
-            ftrs <- sfeatures(rdir, mask[,,seedfr])
+            ftrs <- sfeatures(mask[,,seedfr])
             seedimg <- mask[,,seedfr]*0
             for(l in 1:nrow(ftrs[[1]])){
               seedimg[ftrs[[1]][l, 'm.x'], ftrs[[1]][l, 'm.y']] <- 1
@@ -245,7 +240,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
             seedimg <- bwlabel(seedimg)
             mask[,,j] <- propagate(mask[,,j], seedimg, mask[,,j])
           }
-          ftrs <- sfeatures(rdir, mask)
+          ftrs <- sfeatures(mask)
           largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
           largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
         }
@@ -258,7 +253,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           for (j in largeobjfr){
             if(j==1) break
             seedfr <- j - 1
-            ftrs <- sfeatures(rdir, mask[,,seedfr])
+            ftrs <- sfeatures(mask[,,seedfr])
             seedimg <- mask[,,seedfr]*0
             for(l in 1:nrow(ftrs[[1]])){
               seedimg[ftrs[[1]][l, 'm.x'], ftrs[[1]][l, 'm.y']] <- 1
@@ -266,7 +261,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
             seedimg <- bwlabel(seedimg)
             mask[,,j] <- propagate(mask[,,j], seedimg, mask[,,j])
           }
-          ftrs <- sfeatures(rdir, mask)
+          ftrs <- sfeatures(mask)
           largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
           largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
         }
@@ -552,7 +547,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       kern3 <- makeBrush(size=3, shape="diamond")
       mask <- opening(mask, kern3)
       mask <- bwlabel(mask)
-      ftrs <- sfeatures(rdir, mask)
+      ftrs <- sfeatures(mask)
       smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
       mask <- rmObjects(mask, smallobj)
       moviemask(dir, file, mask, 1)
