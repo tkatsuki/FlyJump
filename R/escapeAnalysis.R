@@ -360,14 +360,13 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   # Detect jumps
   speedmat <- matrix(nrow=(end - start + 1), res[[2]][,'speed'])
   speeddiff <- diff(speedmat, lag=3)*fps/3
-  #speeddiffmed <- rollapply(speeddiff, 3, median, na.rm = TRUE)
   highspeed <- which(speeddiff > spthresh, arr.ind = T)
   if(length(highspeed)!=0){
     speedpeaks <- 1:nrow(highspeed)
-    for(h in 1:nrow(highspeed)){
-      speedpeaks[h] <- max(speeddiff[ifelse((highspeed[h,1]-80) < 1, 1, (highspeed[h,1]-80)):
-                                       ifelse((highspeed[h,1]+80)>nrow(speeddiff), nrow(speeddiff), (highspeed[h,1]+80)),
-                                     highspeed[h,2]], na.rm=T)
+    for(hsp in 1:nrow(highspeed)){
+      speedpeaks[hsp] <- max(speeddiff[ifelse((highspeed[hsp,1]-80) < 1, 1, (highspeed[hsp,1]-80)):
+                                       ifelse((highspeed[hsp,1]+80)>nrow(speeddiff), nrow(speeddiff), (highspeed[hsp,1]+80)),
+                                     highspeed[hsp,2]], na.rm=T)
     }
     speedpeakpos <- which(matrix(speeddiff%in%unique(speedpeaks), dim(speeddiff)[1], dim(speeddiff)[2]), arr.ind=T)[,1]
     if(length(speedpeakpos)>1){
