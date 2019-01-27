@@ -76,7 +76,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   cat(ms6, sep="\n")
   cat(ms6, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-  ext <- file_ext(file)
+  ext <- substr(file, nchar(file)-2, nchar(file))
   if(ext=="fmf"|ext=="FMF") {
     bg <- readFMF(paste0(dir, "/", file), bgstart, bgend, bgskip)
   }
@@ -291,11 +291,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
         ms13 <- paste0("Creating a movie of the mask.")
         cat(ms13, sep="\n")
         cat(ms13, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-
-        moviemask(dir, file, mask, 5)
-        cmd <- paste("ffmpeg -i ", intdir, "tmpimgs/%04d.png -q 1 -r 10 -pix_fmt yuv444p -y ", intdir, file, "_", from, "-", to, "_mask.mp4", sep="")
-        system(cmd, ignore.stderr= T, show.output.on.console=F)
-        unlink(paste0(intdir, "tmpimgs/*"))
+        moviemask(dir, file, mask, from=from, to=to, 5)
       }
       rm(mask)
     }
@@ -327,7 +323,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     #threshbody <- reslist$threshbody
   }
 
-  # Save trajectories on the first frame
+  # Overlay trajectories onto the first frame
   flycol <- rgbImage(firstfr, firstfr, firstfr)
   flyresbl <- res[[1]][,,1]>0|res[[1]][,,2]>0|res[[1]][,,3]>0
   flyres <- Image(sweep(flycol, 1:2, (1-flyresbl), "*")) + res[[1]][,,1:3] # Ignore alpha channel of the png
@@ -551,9 +547,6 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
       mask <- rmObjects(mask, smallobj)
       moviemask(dir, file, mask, 1)
-      cmd <- paste("ffmpeg -i ", intdir, "tmpimgs/%04d.png -q 1 -r 10 -pix_fmt yuv444p -y ", intdir, file, "_", jp-160, "-", jp+160, "_jp_mask.mp4", sep="")
-      system(cmd, ignore.stderr= T, show.output.on.console=F)
-      unlink(paste0(intdir, "tmpimgs/*"))
     }
   }
 
