@@ -26,7 +26,7 @@ colorJumps <- function(dir, obj, x, y, bg, color= 'white', shape = 1, size=0.1){
           plot.margin=unit(c(0,0,-1,-1),"lines"))
   filename <- paste0(dir, "tempsp.png")
   ggsave(plot=p1, filename = filename, width = w/300, height = h/300, bg = "black")
-  tracksp <- readImage(filename)
+  tracksp <- readImage(filename)[,,1:3]
   trackspbl <- tracksp[,,1]>0|tracksp[,,2]>0|tracksp[,,3]>0
   tracksp <- Image(sweep(bg, 1:2, (1-trackspbl), "*")) + tracksp
   colorMode(tracksp) <- "Color"
