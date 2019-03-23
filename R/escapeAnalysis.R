@@ -332,30 +332,31 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
   # Detect discontinuous trajectories
   objnum <- 1:max((res[[2]][,"obj"]))
-  disconframe <- sapply(objnum, function(x) res[[2]][max(which(res[[2]][,"obj"]==x & !is.na(res[[2]][,"x"]))),"frame"])
+  if (objnum > 1){
+    disconframe <- sapply(objnum, function(x) res[[2]][max(which(res[[2]][,"obj"]==x & !is.na(res[[2]][,"x"]))),"frame"])
 
-  for(d in disconframe){
-    fly <- readAVI(paste0(dir, "/", file), d-50, d+50)
-    nobg <- -ssweep(fly, bg, "-")
-    rm(fly)
-    nobg <- ssweep(nobg, arenamask, "*")
-    mask <- nobg > threshbody
-    kern3 <- makeBrush(size=3, shape="diamond")
-    mask <- opening(mask, kern3)
-    mask <- bwlabel(mask)
-    ftrs <- sfeatures(mask)
-    png(file=paste0(intdir, file, "_", d-50, "-", d+50, "_sizeprofile.png"))
-    par(mar = c(5,4,4,5))
-    dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
-    plot(dat, ylim=c(0, max(dat)))
-    dev.off()
-    smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
-    largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
-    largeobjfr <- which(sapply(largeobj, length)!=0)
-    mask <- rmObjects(mask, smallobj)
-    writeImage(mask, file=paste0(intdir, file, "_", d-50, "-", d+50, "_mask.tiff"))
+    for(d in disconframe){
+      fly <- readAVI(paste0(dir, "/", file), d-50, d+50)
+      nobg <- -ssweep(fly, bg, "-")
+      rm(fly)
+      nobg <- ssweep(nobg, arenamask, "*")
+      mask <- nobg > threshbody
+      kern3 <- makeBrush(size=3, shape="diamond")
+      mask <- opening(mask, kern3)
+      mask <- bwlabel(mask)
+      ftrs <- sfeatures(mask)
+      png(file=paste0(intdir, file, "_", d-50, "-", d+50, "_sizeprofile.png"))
+      par(mar = c(5,4,4,5))
+      dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
+      plot(dat, ylim=c(0, max(dat)))
+      dev.off()
+      smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
+      largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
+      largeobjfr <- which(sapply(largeobj, length)!=0)
+      mask <- rmObjects(mask, smallobj)
+      writeImage(mask, file=paste0(intdir, file, "_", d-50, "-", d+50, "_mask.tiff"))
+    }
   }
-
 
   # Detect jumps
   speedmat <- matrix(nrow=(end - start + 1), res[[2]][,'speed'])
