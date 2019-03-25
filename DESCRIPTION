@@ -1,11 +1,25 @@
 Package: FlyJump
 Type: Package
-Title: What the Package Does (Title Case)
+Title: R scripts for analyzing fly escape response
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Authors@R: person("Takeo", "Katsuki", email = "takeo.katsuki@gmail.com", role = c("aut", "cre"))
+Maintainer: Takeo Katsuki <takeo.katsuki@gmail.com>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Depends:
+    R (>= 3.3.1),
+    EBImage,
+    ggplot2,
+    dipr,
+    zoo,
+    loggit,
+Imports:
+    plotrix,
+    plyr,
+    reshape2,
+    devtools,
+Remotes: github::tkatsuki/dipr
+License: BSD 3
 Encoding: UTF-8
-LazyData: true
+LazyData: TRUE
+RoxygenNote: 6.0.1

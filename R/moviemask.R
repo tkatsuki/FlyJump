@@ -1,3 +1,13 @@
+#' Analyze escape response of flies
+#'
+#'
+#' @param obj A target image of Image object or an array.
+#' @param ref A reference image of Image object or an array.
+#' @export
+#' @examples
+#' moviemask()
+#'
+
 moviemask <- function(dir, file, mask, from, to, skip=1){
   filename <- paste0(dir, "/", file)
   intdir <- paste0(dir, "/", file, "_dir/")
