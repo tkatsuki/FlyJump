@@ -26,13 +26,11 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   cat(ms1, file=paste0(intdir, file, "_messages.txt"))
 
   # Analyze only near the digital looming object?
-  if(DLOonly==T){
+  if(DLOonly==T | DLO==T){
     ms2 <- paste0("Looking for DLOs.\n")
     cat(ms2)
     cat(ms2, file=paste0(intdir, file, "_messages.txt"), append=T)
-    ptm <- proc.time()
     samplesq <- readAVI(paste0(dir, "/", file), start, end, crop=c(220,240,220,240))
-    print(proc.time() - ptm)
     intprofileall <- apply(samplesq, 3, mean)
     rm(samplesq)
     intdiffall <- diff(intprofileall, lag=3)
@@ -45,7 +43,12 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
              (firstpeak-4):(firstpeak+6), intdiffall[(firstpeak-4):(firstpeak+6)],
              col = c("red"))
     dev.off()
-    if(intdiffmaxall > 4){
+    if(intdiffmaxall < 4){
+      ms5 <- "DLO was not found! Exiting."
+      cat(ms5, sep="\n")
+      cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+      return(0)
+    } else if(DLOonly==T){
       DLOlastfrall <- which(intdiffall==intdiffmaxall)
       ms3 <- paste0("Fist DLO was given at the ", DLOlastfrall, "th frame!")
       start <- DLOlastfrall - 500
@@ -53,15 +56,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       ms4 <- paste0("Will analyze ", start, " - ", end, ".")
       cat(c(ms3, ms4), sep="\n")
       cat(c(ms3, ms4), file=paste0(intdir, file, "_messages.txt"), sep="\n", append=T)
-    } else {
-      ms5 <- "DLO was not found! Exiting."
-      cat(ms5, sep="\n")
-      cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-      return(0)
     }
-  } else if(DLO==T){
-    samplesq <- readAVI(paste0(dir, "/", file), start, end, crop=c(220,240,220,240))
-    intlist <- apply(samplesq, 3, mean)
   }
 
   # Create background image
@@ -359,8 +354,8 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     speedpeaks <- 1:nrow(highspeed)
     for(hsp in 1:nrow(highspeed)){
       speedpeaks[hsp] <- max(speeddiff[ifelse((highspeed[hsp,1]-80) < 1, 1, (highspeed[hsp,1]-80)):
-                                       ifelse((highspeed[hsp,1]+80)>nrow(speeddiff), nrow(speeddiff), (highspeed[hsp,1]+80)),
-                                     highspeed[hsp,2]], na.rm=T)
+                                         ifelse((highspeed[hsp,1]+80)>nrow(speeddiff), nrow(speeddiff), (highspeed[hsp,1]+80)),
+                                       highspeed[hsp,2]], na.rm=T)
     }
     speedpeakpos <- which(matrix(speeddiff%in%unique(speedpeaks), dim(speeddiff)[1], dim(speeddiff)[2]), arr.ind=T)[,1]
     if(length(speedpeakpos)>1){
@@ -378,11 +373,10 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
   # Output intensity profile, motion speed, and jumps
   if(DLO==T){
-    intdiff <- diff(intlist, lag=3)
     ## Plot
     png(file=paste0(intdir, file, "_", start, "-", end, "_intjumpprofile.png"), width=900, height=900)
     par(mar = c(5,4,4,5))
-    matplot(-intdiff, type="l", col="red", ylim=c(-10, 2), xlab="frame", ylab="Intensity change")
+    matplot(-intdiffall, type="l", col="red", ylim=c(-10, 2), xlab="frame", ylab="Intensity change")
     par(new=T)
     matplot(speedmat, type="l", axes = F, xlab = NA, ylab = NA, ylim=c(0, 200))
     axis(side = 4)
@@ -413,9 +407,9 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
   # Detect single digital looming object
   if(DLOonly==T){
-    intdiffmax <- max(intdiff)
+    intdiffmax <- max(intdiffall)
     if(intdiffmax > 4){
-      DLOlastfr <- which(intdiff==intdiffmax)
+      DLOlastfr <- which(intdiffall==intdiffmax)
       print(paste0("DLO was given at the ", DLOlastfr, "th frame from ", start, "!"))
       DLOframes <- which(res[[2]][,"frame"]%in%c((DLOlastfr-90):DLOlastfr))
       DLOflies <- res[[2]][DLOframes[!is.na(res[[2]][DLOframes,"speed"])], c("frame", "obj", "x", "y", "speed", "size")]
