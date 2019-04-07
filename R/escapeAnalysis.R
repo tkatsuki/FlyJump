@@ -34,7 +34,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     intprofileall <- apply(samplesq, 3, mean)
     rm(samplesq)
     intdiffall <- diff(intprofileall, lag=3)
-    firstpeak <- which(intdiffall > 6)[1]
+    firstpeak <- which(intdiffall > 2)[1]
     intdiffmaxall <- max(intdiffall[(firstpeak-5):(firstpeak+5)])
     png(file=paste0(intdir, file, "_intdiffall.png"))
     par(mar = c(5,4,4,5))
@@ -43,7 +43,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
              (firstpeak-4):(firstpeak+6), intdiffall[(firstpeak-4):(firstpeak+6)],
              col = c("red"))
     dev.off()
-    if(intdiffmaxall < 4){
+    if(intdiffmaxall < 2){
       ms5 <- "DLO was not found! Exiting."
       cat(ms5, sep="\n")
       cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
