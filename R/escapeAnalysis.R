@@ -408,7 +408,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   # Detect single digital looming object
   if(DLOonly==T){
     intdiffmax <- max(intdiffall)
-    if(intdiffmax > 4){
+    if(intdiffmax > 2){
       DLOlastfr <- which(intdiffall==intdiffmax)
       print(paste0("DLO was given at the ", DLOlastfr, "th frame from ", start, "!"))
       DLOframes <- which(res[[2]][,"frame"]%in%c((DLOlastfr-90):DLOlastfr))
