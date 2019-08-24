@@ -13,7 +13,7 @@ movieobjects <- function(dir, file, start, end, trackres, skip=10, tail=100){
   intdir <- paste0(dir, "/", file, "_dir/")
   nfr <- end - start + 1
   nobj <- max(unique(trackres[[2]][,'obj']))
-  ext <- file_ext(filename)
+  ext <- substr(filename, nchar(filename) - 2, nchar(filename))
 
   for(i in 1:(nfr/skip - skip)){
     fr <- start + skip*(i-1) + tail

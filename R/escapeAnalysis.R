@@ -12,7 +12,8 @@
 escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
                            start=1, end=0, interval=0, large=300, maxdist=200, size=100, unit=1, fps=160,
                            maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, maskmoviejp=T, DLO=T, DLOonly=F, ram=0,
-                           gender=c("N", "FM", "MF", "S", "MM", "FF", "M", "F"), spthresh=50, thresh=0, useres=F){
+                           gender=c("N", "FM", "MF", "S", "MM", "FF", "M", "F"), spthresh=50, thresh=0, useres=F,
+                           timestamp=T){
 
   intdir <- paste0(dir, "/", file, "_dir/")
   dir.create(paste0(dir, "/", file, "_dir"))
@@ -75,7 +76,11 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     bge <- readAVI(paste0(dir, "/", file), bgend, bgend)
   }
   bgmax <- pmax(bgs, bge)
-  bg <- dipr::medianPrj(abind(bgs, bge, bgmax, along=3))
+  bgbind <- array(NA, dim=c(dim(bgs)[1], dim(bgs)[2], 3))
+  bgbind[,,1] <- bgs
+  bgbind[,,2] <- bge
+  bgbind[,,3] <- bgmax
+  bg <- dipr::medianPrj(bgbind)
   EBImage::writeImage(bg/255, file=paste0(intdir, file, "_bg.png"))
 
   # Automatic interval setting
@@ -124,13 +129,18 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       # Extract arena only
       nobg <- ssweep(nobg, arenamask, "*")
 
+      # Remove embedded timestamp
+      if(timestamp==T){
+        nobg[1:10,1,] <- 0
+      }
+
       # Automatic thresholding
       if(bn==0){
         sf <- seq(from=0, by=dim(nobg)[3]%/%20, length.out=21)[-1]
         writeImage(nobg[,,sf]/255, file=paste0(intdir, file, "_", start, "-", end, "_threshimg.tiff"))
         densitydata <- density(nobg[,,sf], bw=3)
         troughs <- which(diff(sign(diff(densitydata$y)))==+2)+1
-        troughint <- densitydata$x[troughs[densitydata$y[troughs]<2e-05 & densitydata$y[troughs]>1e-06]]
+        troughint <- densitydata$x[troughs[densitydata$y[troughs]<2e-04 & densitydata$y[troughs]>1e-05]]
 
         ms8 <- paste0("Calculating a threshold for binarization, intensity troughs are ",
                       paste(round(troughint, 1), collapse=", "))
@@ -141,7 +151,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
         png(file=paste0(intdir, file, "_", start, "-", end, "_thresh.png"))
         par(mar = c(5,4,4,5))
-        plot(density(nobg[,,sf], bw=3), ylim=c(0,0.00003))
+        plot(density(nobg[,,sf], bw=3), ylim=c(0,0.0003))
         abline(v=troughint, col="blue")
         abline(v=threshbody, col="green")
         dev.off()
@@ -182,7 +192,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           cat(ms10, sep="\n")
           cat(ms10, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-          mask[,,largeobjfr] <- thresh(nobg[,,largeobjfr], 20, 20, threshbody+5)
+          mask[,,largeobjfr] <- EBImage::thresh(nobg[,,largeobjfr], 20, 20)
           mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
           mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
           mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
@@ -198,7 +208,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
           cat(ms10, sep="\n")
           cat(ms10, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-          mask[,,largeobjfr] <- thresh(nobg[,,largeobjfr], 20, 20, threshbody+5)
+          mask[,,largeobjfr] <- thresh(normalize(nobg[,,largeobjfr]), 20, 20, offset=0.4)
           mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
           mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
           mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
