@@ -11,9 +11,13 @@
 
 escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
                            start=1, end=0, interval=0, large=300, maxdist=200, size=100, unit=1, fps=160,
-                           maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, maskmoviejp=T, DLO=T, DLOonly=F, ram=0,
+                           maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, DLO=T, DLOonly=F, ram=0,
                            gender=c("N", "FM", "MF", "S", "MM", "FF", "M", "F"), spthresh=50, thresh=0, useres=F,
                            timestamp=T){
+
+  ## To do
+  # fix data.table
+  #
 
   intdir <- paste0(dir, "/", file, "_dir/")
   dir.create(paste0(dir, "/", file, "_dir"))
@@ -359,7 +363,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   # Detect jumps
   speedmat <- matrix(nrow=(end - start + 1), res[[2]][,'speed'])
   speeddiff <- diff(speedmat, lag=3)*fps/3
-  highspeed <- which(speeddiff > spthresh, arr.ind = T)
+  highspeed <- which(speeddiff > spthresh*fps, arr.ind = T)
   if(length(highspeed)!=0){
     speedpeaks <- 1:nrow(highspeed)
     for(hsp in 1:nrow(highspeed)){
@@ -516,34 +520,12 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     cat(ms18, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
     for(jp in speedpeakpos){
-      tmpfly <- readAVI(paste0(dir, "/", file), jp-160, jp+160)/255
-      moviemask(dir, file, tmpfly, 1)
-      cmd <- paste("ffmpeg -i ", intdir, "tmpimgs/%04d.png -q 1 -r 10 -pix_fmt yuv444p -y ", intdir, file, "_", jp-160, "-", jp+160, "_jp.mp4", sep="")
-      system(cmd, ignore.stderr= T, show.output.on.console=F)
-      unlink(paste0(intdir, "tmpimgs/*"))
-    }
-  }
-
-  # Generate an mp4 animation mask of each jump +- 160 frames
-  if(maskmoviejp==T & speedpeakpos!=0){
-    ms19 <- paste0("Creating a mask movie of each jump.")
-    cat(ms19, sep="\n")
-    cat(ms19, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-
-    for(jp in speedpeakpos){
-      tmpfly <- readAVI(paste0(dir, "/", file), jp-160, jp+160)
-      nobg <- sweep(-tmpfly, 1:2, -bg)
-      rm(tmpfly)
-      arenamask <- drawCircle(nobg[,,1]*0, dim(nobg)[1]/2, dim(nobg)[2]/2, min(dim(nobg)[1]/2, dim(nobg)[2]/2), col=1, fill=T)
-      nobg <- sweep(nobg, 1:2, arenamask, FUN="*")
-      mask <- nobg > threshbody
-      kern3 <- makeBrush(size=3, shape="diamond")
-      mask <- opening(mask, kern3)
-      mask <- bwlabel(mask)
-      ftrs <- sfeatures(mask)
-      smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
-      mask <- rmObjects(mask, smallobj)
-      moviemask(dir, file, mask, 1)
+      jpstart <- jp - 160
+      jpend <- jp + 160
+      if(jpend > fn|jpend <= 0) jpend <- fn
+      if(jpstart <= 0) jpstart <- 1
+      tmpfly <- readAVI(paste0(dir, "/", file), jpstart, jpend)/255
+      moviemask(dir, file, tmpfly, jpstart, jpend, 1)
     }
   }
 
