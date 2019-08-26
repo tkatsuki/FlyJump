@@ -390,12 +390,12 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     ## Plot
     png(file=paste0(intdir, file, "_", start, "-", end, "_intjumpprofile.png"), width=900, height=900)
     par(mar = c(5,4,4,5))
-    matplot(-intdiffall, type="l", col="red", ylim=c(-10, 2), xlab="frame", ylab="Intensity change")
+    matplot(-intdiffall[start:end], type="l", col="red", ylim=c(-10, 2), xlab="frame", ylab="Intensity change")
     par(new=T)
     matplot(speedmat, type="l", axes = F, xlab = NA, ylab = NA, ylim=c(0, 200))
     axis(side = 4)
     mtext("mm/sec", side=4, line=2)
-    if(speedpeakpos!=0) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
+    if(length(speedpeakpos)!=0) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
     dev.off()
   } else {
     png(file=paste0(intdir, file, "_", start, "-", end, "_jumpprofile.png"), width=900, height=900)
