@@ -40,6 +40,16 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     rm(samplesq)
     intdiffall <- diff(intprofileall, lag=3)
     firstpeak <- which(intdiffall > 2)[1]
+    if(is.na(firstpeak)){
+      ms5 <- "DLO was not found! Exiting."
+      cat(ms5, sep="\n")
+      cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+      png(file=paste0(intdir, file, "_intdiffall.png"))
+      par(mar = c(5,4,4,5))
+      plot(intdiffall, type="l", ylim=c(-2, 10), xlab="frame", ylab="Intensity change")
+      dev.off()
+      return(0)
+    }
     intdiffmaxall <- max(intdiffall[(firstpeak-5):(firstpeak+5)])
     png(file=paste0(intdir, file, "_intdiffall.png"))
     par(mar = c(5,4,4,5))
@@ -48,12 +58,13 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
              (firstpeak-4):(firstpeak+6), intdiffall[(firstpeak-4):(firstpeak+6)],
              col = c("red"))
     dev.off()
-    if(intdiffmaxall < 2){
-      ms5 <- "DLO was not found! Exiting."
-      cat(ms5, sep="\n")
-      cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-      return(0)
-    } else if(DLOonly==T){
+    # if(intdiffmaxall < 2){
+    #   ms5 <- "DLO was not found! Exiting."
+    #   cat(ms5, sep="\n")
+    #   cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+    #   return(0)
+    # } else
+    if(DLOonly==T){
       DLOlastfrall <- which(intdiffall==intdiffmaxall)
       ms3 <- paste0("Fist DLO was given at the ", DLOlastfrall, "th frame!")
       start <- DLOlastfrall - 500
@@ -334,7 +345,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
   # Detect discontinuous trajectories
   objnum <- 1:max((res[[2]][,"obj"]))
-  if (objnum > 1){
+  if (length(objnum) > 1){
     disconframe <- sapply(objnum, function(x) res[[2]][max(which(res[[2]][,"obj"]==x & !is.na(res[[2]][,"x"]))),"frame"])
 
     for(d in disconframe){
@@ -381,7 +392,10 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     }
     speedpeakpos <- unique(speedpeakpos)
   } else {
-    speedpeakpos <- 0
+    speedpeakpos <- NULL
+    ms19 <- paste0("No jumps were detected.")
+    cat(ms19, sep="\n")
+    cat(ms19, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
   }
 
 
@@ -395,29 +409,29 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
     matplot(speedmat, type="l", axes = F, xlab = NA, ylab = NA, ylim=c(0, 200))
     axis(side = 4)
     mtext("mm/sec", side=4, line=2)
-    if(length(speedpeakpos)!=0) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
+    if(!is.null(speedpeakpos)) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
     dev.off()
   } else {
     png(file=paste0(intdir, file, "_", start, "-", end, "_jumpprofile.png"), width=900, height=900)
     par(mar = c(5,4,4,5))
     matplot(speedmat, type="l", lty=1, ylim=c(0, 100), xlab="frame", ylab="speed (mm/sec)")
-    mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
+    if(!is.null(speedpeakpos)) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
     dev.off()
     png(file=paste0(intdir, file, "_", start, "-", end, "_speeddiff.png"), width=900, height=900)
     par(mar = c(5,4,4,5))
     matplot(speeddiff, type="l", lty=1, ylim=c(-5000, 5000), xlab="frame", ylab="acceleration (mm/sec2)")
-    if(speedpeakpos!=0) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
+    if(!is.null(speedpeakpos)) mtext(1:length(speedpeakpos), side=3, at=speedpeakpos)
     dev.off()
   }
 
   # Detect jump regions
-  jumpfr <- as.vector(sapply(speedpeakpos, function(x) seq(from=x, by=1, length.out=6)))
-  jumps <- res[[2]][which(res[[2]][,c('frame')]%in%jumpfr), c('obj', 'x', 'y', 'speed', 'frame')]
-
-  # Center warning
-  centermask <- drawCircle(firstfr[,]*0, dim(firstfr)[1]/2+8, dim(firstfr)[2]/2-7, 20, col=1, fill=T)
-  warncenter <- jumps[which(jumps[, c('x')] > dim(firstfr)[1]/2-12 & jumps[, c('x')] < dim(firstfr)[1]/2+28 &
-                              jumps[, c('y')] > dim(firstfr)[2]/2-27 & jumps[, c('y')] < dim(firstfr)[2]/2+13), 'frame']
+  if(is.null(speedpeakpos)){
+    jumpfr <- NA
+    jumps <- NA
+    } else {
+      jumpfr <- as.vector(sapply(speedpeakpos, function(x) seq(from=x, by=1, length.out=6)))
+      jumps <- res[[2]][which(res[[2]][,c('frame')]%in%jumpfr), c('obj', 'x', 'y', 'speed', 'frame')]
+    }
 
   # Detect single digital looming object
   if(DLOonly==T){
@@ -486,8 +500,10 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   # Overlay DLO timing, fly speed, and jumps
   flyspDLO <- colorspeed(intdir, DLOflies[,2], DLOflies[,3], DLOflies[,4], 350, flysp, linetype=3, lwd=0.4)
   writeImage(flyspDLO, file=paste0(intdir, file, "_", start, "-", end, "_speedDLO", ".png"))
-  flyspDLOjp <- colorJumps(intdir, jumps[,'obj'], jumps[,'x'], jumps[,'y'], flyspDLO, shape=1, size=0.2, color='white')
-  writeImage(flyspDLOjp, file=paste0(intdir, file, "_", start, "-", end, "_speedDLOjp", ".png"))
+  if(!is.na(jumps)){
+    flyspDLOjp <- colorJumps(intdir, jumps[,'obj'], jumps[,'x'], jumps[,'y'], flyspDLO, shape=1, size=0.2, color='white')
+    writeImage(flyspDLOjp, file=paste0(intdir, file, "_", start, "-", end, "_speedDLOjp", ".png"))
+  }
 
   # Generate an mp4 animation about motion speed
   if(speedmovie==T){
@@ -515,24 +531,26 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
 
   # Generate an mp4 animation of each jump +- 160 frames
   if(moviejp==T){
-    ms18 <- paste0("Creating a movie of each jump.")
-    cat(ms18, sep="\n")
-    cat(ms18, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+    if(!is.null(speedpeakpos)){
+      ms18 <- paste0("Creating a movie of each jump.")
+      cat(ms18, sep="\n")
+      cat(ms18, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-    for(jp in speedpeakpos){
-      jpstart <- jp - 160
-      jpend <- jp + 160
-      if(jpend > fn|jpend <= 0) jpend <- fn
-      if(jpstart <= 0) jpstart <- 1
-      tmpfly <- readAVI(paste0(dir, "/", file), jpstart, jpend)/255
-      moviemask(dir, file, tmpfly, jpstart, jpend, 1)
+      for(jp in speedpeakpos){
+        jpstart <- jp - 160
+        jpend <- jp + 160
+        if(jpend > fn|jpend <= 0) jpend <- fn
+        if(jpstart <= 0) jpstart <- 1
+        tmpfly <- readAVI(paste0(dir, "/", file), jpstart, jpend)/255
+        moviemask(dir, file, tmpfly, jpstart, jpend, 1)
+      }
     }
   }
 
   rm(res)
   if(DLOonly==F) DLOflies <- NULL
   reslist <- list(args=c(file, bgstart, bgend, bgskip, start, end, interval, large, maskmovie, speedmovie, objectmovie, ram, gender, thresh),
-                  DLO=DLOlastfr, DLOflies=DLOflies, jumps=jumps, jumpfr=speedpeakpos, jumpnum=length(speedpeakpos), warncenter=warncenter,
+                  DLO=DLOlastfr, DLOflies=DLOflies, jumps=jumps, jumpfr=speedpeakpos, jumpnum=length(speedpeakpos),
                   threshbody=threshbody, gen=gen)
   saveRDS(reslist, file=paste0(intdir, file, "_reslist", ".rds"))
   sink(file=paste0(intdir, file, "_reslist", ".txt"), type="output")
