@@ -178,7 +178,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       cat(ms9, sep="\n")
       cat(ms9, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-      # Segmentation
+      # Segmentation by global thresholding
       mask <- nobg > threshbody
       kern3 <- makeBrush(size=3, shape="diamond")
       mask <- opening(mask, kern3)
@@ -201,83 +201,60 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
       write(largeobjfr, file=paste0(intdir, file, "_", from, "-", to, "_largeobj.txt"))
 
       # Try to segment large objects by local thresholding
-      if(length(largeobjfr)==1){
-        if(max(mask[,,largeobjfr]) < 2){
-          ms10 <- paste0("Objects larger than ", large, "px were detected. Applying watershed.")
-          cat(ms10, sep="\n")
-          cat(ms10, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+      if((length(largeobjfr)==1 && max(mask[,,largeobjfr]) < 2)
+         || (length(largeobjfr)>1 && min(apply(mask[,,largeobjfr], 3, max)) < 2)){
+        ms10 <- paste0("Objects larger than ", large, "px were detected. Applying local thresholding.")
+        cat(ms10, sep="\n")
+        cat(ms10, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-          mask[,,largeobjfr] <- EBImage::thresh(nobg[,,largeobjfr], 20, 20)
-          mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
-          mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
-          mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
-          ftrs <- sfeatures(mask[,,largeobjfr])
-          smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 50))
-          mask[,,largeobjfr] <- rmObjects(mask[,,largeobjfr], smallobj)
-          largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
-          largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
-        }
-      }else if(length(largeobjfr)>1){
-        if(min(apply(mask[,,largeobjfr], 3, max)) < 2){
-          ms10 <- paste0("Objects larger than ", large, "px were detected. Applying watershed.")
-          cat(ms10, sep="\n")
-          cat(ms10, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+        locmask <- EBImage::thresh(normalize(nobg[,,largeobjfr]), 20, 20, 0.4)
+        locmask <- bwlabel(locmask)
+        ftrs <- sfeatures(locmask)
+        smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
+        mask[,,largeobjfr] <- rmObjects(locmask, smallobj)
+        largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
+        largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
+        write(largeobjfr, file=paste0(intdir, file, "_", from, "-", to, "_largeobj2.txt"))
+      }
 
-          mask[,,largeobjfr] <- thresh(normalize(nobg[,,largeobjfr]), 20, 20, offset=0.4)
-          mask[,,largeobjfr] <- bwlabel(mask[,,largeobjfr])
-          mask[,,largeobjfr] <- distmap(mask[,,largeobjfr])
-          mask[,,largeobjfr] <- watershed(mask[,,largeobjfr], ext = 7)
-          ftrs <- sfeatures(mask[,,largeobjfr])
-          smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 50))
-          mask[,,largeobjfr] <- rmObjects(mask[,,largeobjfr], smallobj)
-          largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
-          largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
-        }
+      # If fused objects persist, use watershed segmentation
+      if((length(largeobjfr)==1 && max(mask[,,largeobjfr]) < 2)
+         || (length(largeobjfr)>1 && min(apply(mask[,,largeobjfr], 3, max)) < 2)){
+        ms10_2 <- paste0("Objects larger than ", large, "px were detected. Applying watershed segmentation.")
+        cat(ms10_2, sep="\n")
+        cat(ms10_2, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+
+        distmapmask <- distmap(mask[,,largeobjfr])
+        watershedmask <- watershed(distmapmask, ext = 7)
+        ftrs <- sfeatures(watershedmask) # Needs 1> frames? Issue with video 101
+        smallobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] < 40))
+        mask[,,largeobjfr] <- rmObjects(watershedmask, smallobj)
+        largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
+        largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
+        write(largeobjfr, file=paste0(intdir, file, "_", from, "-", to, "_largeobj3.txt"))
       }
 
       # If fused objects persist, use voronoi-based segmentation
-      if(length(largeobjfr)==1){
-        if(max(mask[,,largeobjfr]) < 2){
-          ms11 <- paste0("Objects larger than ", large, "px persisted. Applying voronoi segmentation.")
-          cat(ms11, sep="\n")
-          cat(ms11, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+      if((length(largeobjfr)==1 && max(mask[,,largeobjfr]) < 2)
+         || (length(largeobjfr)>1 && min(apply(mask[,,largeobjfr], 3, max)) < 2)){
+        ms11 <- paste0("Objects larger than ", large, "px persisted. Applying voronoi segmentation.")
+        cat(ms11, sep="\n")
+        cat(ms11, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-          for (j in largeobjfr){
-            if(j==1) break
-            seedfr <- j - 1
-            ftrs <- sfeatures(mask[,,seedfr])
-            seedimg <- mask[,,seedfr]*0
-            for(l in 1:nrow(ftrs[[1]])){
-              seedimg[ftrs[[1]][l, 'm.x'], ftrs[[1]][l, 'm.y']] <- 1
-            }
-            seedimg <- bwlabel(seedimg)
-            mask[,,j] <- propagate(mask[,,j], seedimg, mask[,,j])
+        for (j in largeobjfr){
+          if(j==1) break
+          seedfr <- j - 1
+          ftrs <- sfeatures(mask[,,seedfr])
+          seedimg <- mask[,,seedfr]*0
+          for(l in 1:nrow(ftrs[[1]])){
+            seedimg[ftrs[[1]][l, 'm.x'], ftrs[[1]][l, 'm.y']] <- 1
           }
-          ftrs <- sfeatures(mask)
-          largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
-          largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
+          seedimg <- bwlabel(seedimg)
+          mask[,,j] <- propagate(mask[,,j], seedimg, mask[,,j])
         }
-      }else if(length(largeobjfr)>1){
-        if(min(apply(mask[,,largeobjfr], 3, max)) < 2){
-          ms11 <- paste0("Objects larger than ", large, "px persisted. Applying voronoi segmentation.")
-          cat(ms11, sep="\n")
-          cat(ms11, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-
-          for (j in largeobjfr){
-            if(j==1) break
-            seedfr <- j - 1
-            ftrs <- sfeatures(mask[,,seedfr])
-            seedimg <- mask[,,seedfr]*0
-            for(l in 1:nrow(ftrs[[1]])){
-              seedimg[ftrs[[1]][l, 'm.x'], ftrs[[1]][l, 'm.y']] <- 1
-            }
-            seedimg <- bwlabel(seedimg)
-            mask[,,j] <- propagate(mask[,,j], seedimg, mask[,,j])
-          }
-          ftrs <- sfeatures(mask)
-          largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
-          largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
-        }
+        ftrs <- sfeatures(mask)
+        largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
+        largeobjfr <- largeobjfr[which(sapply(largeobj, length)!=0)]
       }
 
       rm(nobg)
@@ -428,10 +405,10 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   if(is.null(speedpeakpos)){
     jumpfr <- NA
     jumps <- NA
-    } else {
-      jumpfr <- as.vector(sapply(speedpeakpos, function(x) seq(from=x, by=1, length.out=6)))
-      jumps <- res[[2]][which(res[[2]][,c('frame')]%in%jumpfr), c('obj', 'x', 'y', 'speed', 'frame')]
-    }
+  } else {
+    jumpfr <- as.vector(sapply(speedpeakpos, function(x) seq(from=x, by=1, length.out=6)))
+    jumps <- res[[2]][which(res[[2]][,c('frame')]%in%jumpfr), c('obj', 'x', 'y', 'speed', 'frame')]
+  }
 
   # Detect single digital looming object
   if(DLOonly==T){
