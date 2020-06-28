@@ -9,7 +9,7 @@
 #'
 #'
 
-escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
+escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
                            start=1, end=0, interval=0, large=300, maxdist=200, size=100, unit=1, fps=160,
                            maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, DLO=T, DLOonly=F, ram=0,
                            gender=c("N", "FM", "MF", "S", "MM", "FF", "M", "F"), spthresh=50, thresh=0, useres=F,
@@ -24,6 +24,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   dir.create(paste0(intdir, "tmpimgs"))
   gender <- match.arg(gender)
   ftrfiles <- list()
+  ext <- substr(file, nchar(file)-2, nchar(file))
 
   # Welcome message
   ms1 <- paste0("Processing ", dir, "/", file, ".\n")
@@ -76,11 +77,16 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   }
 
   # Create background image
-  ms6 <- "Creating a background image."
-  cat(ms6, sep="\n")
-  cat(ms6, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-
-  ext <- substr(file, nchar(file)-2, nchar(file))
+  if(!is.na(bgfile)){
+    ms6_1 <- "Loading a background image."
+    cat(ms6_1, sep="\n")
+    cat(ms6_1, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
+    bg <- EBImage::readImage(bgfile)*2^8
+    EBImage::writeImage(bg, file=paste0(intdir, file, "_bg.png"))
+    if(ext=="avi"|ext=="AVI") {
+      fn <- readAVI(paste0(dir, "/", file), getFrames=T)
+    }
+  } else {
   if(ext=="fmf"|ext=="FMF") {
     bg <- readFMF(paste0(dir, "/", file), bgstart, bgend, bgskip)
   }
@@ -97,6 +103,7 @@ escapeAnalysis <- function(dir, file, bgstart=1, bgend=0, bgskip=100,
   bgbind[,,3] <- bgmax
   bg <- dipr::medianPrj(bgbind)
   EBImage::writeImage(bg/255, file=paste0(intdir, file, "_bg.png"))
+  }
 
   # Automatic interval setting
   if(interval==0){
