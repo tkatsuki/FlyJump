@@ -419,9 +419,13 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
 
   # Detect single digital looming object
   if(DLOonly==T){
-    intdiffmax <- max(intdiffall)
-    if(intdiffmax > 2){
-      DLOlastfr <- which(intdiffall==intdiffmax)
+    samplesqDLO <- readAVI(paste0(dir, "/", file), start, end, crop=c(220,240,220,240))
+    intprofileDLO <- apply(samplesqDLO, 3, mean)
+    rm(samplesqDLO)
+    intdiffDLO <- diff(intprofileDLO, lag=3)
+    intdiffDLOmax <- max(intdiffDLO)
+    if(intdiffDLOmax > 2){
+      DLOlastfr <- which(intdiffDLO==intdiffDLOmax)
       print(paste0("DLO was given at the ", DLOlastfr, "th frame from ", start, "!"))
       DLOframes <- which(res[[2]][,"frame"]%in%c((DLOlastfr-90):DLOlastfr))
       DLOflies <- res[[2]][DLOframes[!is.na(res[[2]][DLOframes,"speed"])], c("frame", "obj", "x", "y", "speed", "size")]
@@ -445,7 +449,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     cat(ms14, sep="\n")
     cat(ms14, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
 
-    dt <- data.table(res[[2]][DLOframes[!is.na(res[[2]][DLOframes,"speed"])], c("obj", "size")])
+    dt <- data.frame(res[[2]][DLOframes[!is.na(res[[2]][DLOframes,"speed"])], c("obj", "size")])
     DLOflies <- cbind(DLOflies, gender=NA)
     gen <- dt[, list(median=median(size)), by=obj]
     if(gender=="MF"|gender=="FM"){
