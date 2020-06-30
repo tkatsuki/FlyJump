@@ -444,6 +444,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
   }
 
   # Gender detection
+  # this is not going to work for copulation
   if(gender!="N"){
     ms14 <- paste0("Detecting gender.")
     cat(ms14, sep="\n")
@@ -537,7 +538,12 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
 
   rm(res)
   if(DLOonly==F) DLOflies <- NULL
-  reslist <- list(args=c(file, bgstart, bgend, bgskip, start, end, interval, large, maskmovie, speedmovie, objectmovie, ram, gender, thresh),
+  reslist <- list(args=c(paste0("dir='", dir, "', file='", file, "', bgfile='", bgfile, "', bgstart=", bgstart, ", bgend=",
+                                bgend, ", bgskip=", bgskip, ", start=", start, ", end=", end, ", interval=", interval,
+                                ", large=", large, ", maxdist=", maxdist, ", size=", size, ", unit=", unit, ", fps=",
+                                fps, ", maskmovie=", maskmovie, ", speedmovie=", speedmovie, ", objectmovie=",
+                                objectmovie, ", moviejp=", moviejp, ", DLO=", DLO, ", DLOonly=", DLOonly, ", ram=", ram,
+                                ", gender=", gender, ", spthresh=", spthresh, ", thresh=", thresh, ", useres=", useres, ", timestamp=", timestamp)),
                   DLO=DLOlastfr, DLOflies=DLOflies, jumps=jumps, jumpfr=speedpeakpos, jumpnum=length(speedpeakpos),
                   threshbody=threshbody, gen=gen)
   saveRDS(reslist, file=paste0(intdir, file, "_reslist", ".rds"))
