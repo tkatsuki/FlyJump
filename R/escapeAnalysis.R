@@ -333,7 +333,17 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     disconframe <- sapply(objnum, function(x) res[[2]][max(which(res[[2]][,"obj"]==x & !is.na(res[[2]][,"x"]))),"frame"])
 
     for(d in disconframe){
-      fly <- readAVI(paste0(dir, "/", file), d-50, d+50)
+      if(d-50 <1){
+        dstart <- 1
+      }else {
+          dstart <- d-50
+        }
+      if(d+50 > fn){
+        dend <- fn
+      }else{
+        dend <- d+50
+      }
+      fly <- readAVI(paste0(dir, "/", file), dstart, dend)
       nobg <- -ssweep(fly, bg, "-")
       rm(fly)
       nobg <- ssweep(nobg, arenamask, "*")
@@ -342,7 +352,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
       mask <- opening(mask, kern3)
       mask <- bwlabel(mask)
       ftrs <- sfeatures(mask)
-      png(file=paste0(intdir, file, "_", d-50, "-", d+50, "_sizeprofile.png"))
+      png(file=paste0(intdir, file, "_", dstart, "-", dend, "_sizeprofile.png"))
       par(mar = c(5,4,4,5))
       dat <- unlist(lapply(ftrs, function(x) x[,'m.pxs']))
       plot(dat, ylim=c(0, max(dat)))
@@ -351,7 +361,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
       largeobj <- lapply(ftrs, function(x) which(x[, 'm.pxs'] > large))
       largeobjfr <- which(sapply(largeobj, length)!=0)
       mask <- rmObjects(mask, smallobj)
-      writeImage(mask, file=paste0(intdir, file, "_", d-50, "-", d+50, "_mask.tiff"))
+      writeImage(mask, file=paste0(intdir, file, "_", dstart, "-", dend, "_mask.tiff"))
     }
   }
 
