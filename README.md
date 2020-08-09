@@ -1,4 +1,6 @@
 # FlyJump
+
+
 Fly jump detection
 
 library(dipr)
@@ -7,7 +9,7 @@ library(EBImage)
 
 library(FlyJump)
 
-dir <- "/Users/specify/directory/containing/mp4files" # change this
+dir <- "/Users/specify/directory/containing/mp4files/" # change this. Don't forget / at the end.
 
 bgfile="/Users/takeokatsuki/bg.png" # change this. Use this if the fly does not move much in the video. To create a bg.png file first run the following code with a video in which 
 flies move so that median filter creates a background. Then look for bg.png file in the output folder.
