@@ -3,6 +3,21 @@
 
 Fly jump detection
 
+If you are using Windows install Rtools following the instructions described here: https://cran.r-project.org/bin/windows/Rtools/
+
+install.packages(c("devtools"))
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("EBImage")
+
+library(devtools)
+
+devtools::install_github("tkatsuki/dipr")
+
+devtools::install_github("tkatsuki/FlyJump")
+
 library(dipr)
 
 library(EBImage)
