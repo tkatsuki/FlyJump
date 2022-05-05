@@ -11,7 +11,7 @@
 
 escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
                            start=1, end=0, interval=0, large=300, maxdist=200, size=100, unit=1, fps=160,
-                           maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, DLO=T, DLOonly=F, ram=0,
+                           maskmovie=T, speedmovie=T, objectmovie=T, moviejp=T, DLO=T, DLOonly=F, stimROI=c(220,240,220,240), ram=0,
                            gender=c("N", "FM", "MF", "S", "MM", "FF", "M", "F"), spthresh=50, thresh=0, useres=F,
                            timestamp=T){
 
@@ -36,7 +36,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     ms2 <- paste0("Looking for DLOs.\n")
     cat(ms2)
     cat(ms2, file=paste0(intdir, file, "_messages.txt"), append=T)
-    samplesq <- readAVI(paste0(dir, "/", file), start, end, crop=c(220,240,220,240))
+    samplesq <- readAVI(paste0(dir, "/", file), start, end, crop=stimROI)
     intprofileall <- apply(samplesq, 3, mean)
     rm(samplesq)
     intdiffall <- diff(intprofileall, lag=3)
@@ -162,7 +162,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
         writeImage(nobg[,,sf]/255, file=paste0(intdir, file, "_", start, "-", end, "_threshimg.tiff"))
         densitydata <- density(nobg[,,sf], bw=3)
         troughs <- which(diff(sign(diff(densitydata$y)))==+2)+1
-        troughint <- densitydata$x[troughs[densitydata$y[troughs]<2e-04 & densitydata$y[troughs]>1e-05]]
+        troughint <- densitydata$x[troughs[densitydata$y[troughs]<2e-04 & densitydata$y[troughs]>1e-06]]
 
         ms8 <- paste0("Calculating a threshold for binarization, intensity troughs are ",
                       paste(round(troughint, 1), collapse=", "))
