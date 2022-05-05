@@ -5,6 +5,8 @@ Fly jump detection
 
 If you are using Windows install Rtools following the instructions described here: https://cran.r-project.org/bin/windows/Rtools/
 
+You also need ffmpeg installed on your system. Follow https://www.wikihow.com/Install-FFmpeg-on-Windows
+
 install.packages(c("devtools"))
 
 if (!requireNamespace("BiocManager", quietly = TRUE))
