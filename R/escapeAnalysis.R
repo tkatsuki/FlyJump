@@ -40,7 +40,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     intprofileall <- apply(samplesq, 3, mean)
     rm(samplesq)
     intdiffall <- diff(intprofileall, lag=3)
-    firstpeak <- which(intdiffall > 2)[1]
+    firstpeak <- which(intdiffall > 5)[1] + 3
     if(is.na(firstpeak)){
       ms5 <- "DLO was not found! Exiting."
       cat(ms5, sep="\n")
@@ -59,12 +59,6 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
              (firstpeak-4):(firstpeak+6), intdiffall[(firstpeak-4):(firstpeak+6)],
              col = c("red"))
     dev.off()
-    # if(intdiffmaxall < 2){
-    #   ms5 <- "DLO was not found! Exiting."
-    #   cat(ms5, sep="\n")
-    #   cat(ms5, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-    #   return(0)
-    # } else
     if(DLOonly==T){
       DLOlastfrall <- which(intdiffall==intdiffmaxall)
       ms3 <- paste0("Fist DLO was given at the ", DLOlastfrall, "th frame!")
@@ -307,7 +301,6 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     ms12 <- paste0("Running tracking function.")
     cat(ms12, sep="\n")
     cat(ms12, file=paste0(intdir, file, "_messages.txt"), append=T, sep="\n")
-    #res <- tracking(mask, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
     res <- tracking(w=w, h=h, maxdist=maxdist, size=size, ftrs=ftrs, unit=unit, interval=1/fps)
     writeImage(res[[1]], file=paste0(intdir, file, "_", start, "-", end, ".png"))
 
@@ -316,8 +309,6 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
 
   } else {
     res <- readRDS(file=paste0(intdir, file, "_", start, "-", end, ".rds"))
-    #reslist <- readRDS(file=paste0(intdir, file, "_reslist", ".rds"))
-    #threshbody <- reslist$threshbody
   }
 
   # Overlay trajectories onto the first frame
@@ -398,7 +389,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
     ## Plot
     png(file=paste0(intdir, file, "_", start, "-", end, "_intjumpprofile.png"), width=900, height=900)
     par(mar = c(5,4,4,5))
-    matplot(-intdiffall[start:end], type="l", col="red", ylim=c(-10, 2), xlab="frame", ylab="Intensity change")
+    matplot(-intdiffall[start:end], type="l", col="red", ylim=c(-10, 10), xlab="frame", ylab="Intensity change")
     par(new=T)
     matplot(speedmat, type="l", axes = F, xlab = NA, ylab = NA, ylim=c(0, 200))
     axis(side = 4)
@@ -429,7 +420,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
 
   # Detect single digital looming object
   if(DLOonly==T){
-    samplesqDLO <- readAVI(paste0(dir, "/", file), start, end, crop=c(220,240,220,240))
+    samplesqDLO <- readAVI(paste0(dir, "/", file), start, end, crop=stimROI)
     intprofileDLO <- apply(samplesqDLO, 3, mean)
     rm(samplesqDLO)
     intdiffDLO <- diff(intprofileDLO, lag=3)
@@ -493,13 +484,13 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
   x <- res[[2]][!is.na(res[[2]][,'x']), "x"]
   y <- res[[2]][!is.na(res[[2]][,'x']), "y"]
   z <- res[[2]][!is.na(res[[2]][,'x']), "speed"]
-  flysp <- colorspeed(intdir, obj, x, y, z, flycol)
+  flysp <- colorspeed(intdir, obj, x, y, z, flycol, max=max(z, na.rm=T))
   writeImage(flysp, file=paste0(intdir, file, "_", start, "-", end, "_speed", ".png"))
 
   # Overlay DLO timing, fly speed, and jumps
   flyspDLO <- colorspeed(intdir, DLOflies[,2], DLOflies[,3], DLOflies[,4], 350, flysp, linetype=3, lwd=0.4)
   writeImage(flyspDLO, file=paste0(intdir, file, "_", start, "-", end, "_speedDLO", ".png"))
-  if(!is.na(jumps)){
+  if(length(jumps)!=0){
     flyspDLOjp <- colorJumps(intdir, jumps[,'obj'], jumps[,'x'], jumps[,'y'], flyspDLO, shape=1, size=0.2, color='white')
     writeImage(flyspDLOjp, file=paste0(intdir, file, "_", start, "-", end, "_speedDLOjp", ".png"))
   }
@@ -552,7 +543,7 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
                                 bgend, ", bgskip=", bgskip, ", start=", start, ", end=", end, ", interval=", interval,
                                 ", large=", large, ", maxdist=", maxdist, ", size=", size, ", unit=", unit, ", fps=",
                                 fps, ", maskmovie=", maskmovie, ", speedmovie=", speedmovie, ", objectmovie=",
-                                objectmovie, ", moviejp=", moviejp, ", DLO=", DLO, ", DLOonly=", DLOonly, ", ram=", ram,
+                                objectmovie, ", moviejp=", moviejp, ", DLO=", DLO, ", DLOonly=", DLOonly, ", stimROI=", stimROI, "ram=", ram,
                                 ", gender=", gender, ", spthresh=", spthresh, ", thresh=", thresh, ", useres=", useres, ", timestamp=", timestamp)),
                   DLO=DLOlastfr, DLOflies=DLOflies, jumps=jumps, jumpfr=speedpeakpos, jumpnum=length(speedpeakpos),
                   threshbody=threshbody, gen=gen)
