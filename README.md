@@ -7,24 +7,18 @@ If you are using Windows install Rtools following the instructions described her
 
 You also need ffmpeg installed on your system. Follow https://www.wikihow.com/Install-FFmpeg-on-Windows
 
+```
 install.packages(c("devtools"))
-
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
-
 BiocManager::install("EBImage")
-
 library(devtools)
-
 devtools::install_github("tkatsuki/dipr")
-
 devtools::install_github("tkatsuki/FlyJump")
-
 library(dipr)
-
 library(EBImage)
-
 library(FlyJump)
+```
 
 dir <- "/Users/specify/directory/containing/mp4files/" # change this. Don't forget / at the end.
 
