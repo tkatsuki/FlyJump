@@ -18,6 +18,8 @@ escapeAnalysis <- function(dir, file, bgfile=NA, bgstart=1, bgend=0, bgskip=100,
   ## To do
   # fix data.table
   #
+  library(dipr)
+  library(EBImage)
 
   intdir <- paste0(dir, "/", file, "_dir/")
   dir.create(paste0(dir, "/", file, "_dir"))
